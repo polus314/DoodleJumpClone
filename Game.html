@@ -16,9 +16,10 @@
 			
 			const MAX_Y_VEL = 20;
 			const SCREEN_WIDTH = 400;
-			                                                                                                                                                                                                                                                                                         
+			const NOSE_WIDTH = 15;
+			
 			function updateDoodle() {
-				if (platform.x - doodle.width < doodle.x && doodle.x < platform.x + platform.width + doodle.width)
+				if (platform.x - doodle.width < doodle.x - NOSE_WIDTH && doodle.x + NOSE_WIDTH < platform.x + platform.width)
 				{
 					if (doodle.y + doodle.height - MAX_Y_VEL - 1 < platform.y && platform.y < doodle.y + doodle.height)
 					{
