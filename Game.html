@@ -8,25 +8,38 @@
 			
 			function keydownHandler(event) {
 				if(event.keyCode == 37) {
-					doodle.xVel = -5;
+					doodle.left = true;
 				}
 				else if(event.keyCode == 39) {
-					doodle.xVel = 5;
+					doodle.right = true;
 				}
 			}
 			
 			function keyupHandler(event) {
 				if(event.keyCode == 37) {
-					doodle.xVel = 0;
+					doodle.left = false;
 				}
 				else if(event.keyCode == 39) {
+					doodle.right = false;
+				}
+			}
+			
+			function inputLogic(){
+				if(doodle.left && !doodle.right){
+					doodle.xVel = -5;
+				}
+				else if(!doodle.left && doodle.right){
+					doodle.xVel = 5;
+				}
+				else if(doodle.left == doodle.right){
 					doodle.xVel = 0;
 				}
+			
 			}
 			
 			const MAX_Y_VEL = 20;
 			const SCREEN_WIDTH = 400;
-			const NOSE_WIDTH = 15;
+			const NOSE_WIDTH = 14;
 			
 			function updateDoodle() {
 				if (platform.x - doodle.width < doodle.x - NOSE_WIDTH && doodle.x + NOSE_WIDTH < platform.x + platform.width)
@@ -36,9 +49,8 @@
 						doodle.yVel = -20;
 					}
 				}
-				
+				inputLogic();
 				doodle.x += doodle.xVel;
-				//doodle.xVel = 0;
 			
 				doodle.y += doodle.yVel;
 				if (doodle.yVel < MAX_Y_VEL) {
@@ -72,8 +84,11 @@
 			}
 			
 			function setupGame() {
-				doodleImg = new Image();
-				doodleImg.src = "jump_left_face.png";
+				doodleImgLeft = new Image();
+				doodleImgLeft.src = "jump_left_face.png";
+				doodleImgRight = new Image();
+				doodleImgRight.src = "jump_right_face.png";
+				
 				
 				platformImg = new Image();
 				platformImg.src = "Platform.png";
@@ -84,14 +99,18 @@
 				platform.width = 64;
 				platform.height = 32;
 				
-				doodle.image = doodleImg;
+				doodle.leftFace = doodleImgLeft;
+				doodle.rightFace = doodleImgRight;
+				doodle.image = doodleImgLeft;
 				doodle.x = 0;
+				doodle.left = false;
+				doodle.right = false;
+				doodle.xVel = 0;
 				doodle.y = 530;
+				doodle.yVel = 0;
 				doodle.width = 64;
 				doodle.height = 64;
-				doodle.yVel = 0;
-				doodle.xVel = 0;
-			
+				
 				setTimeout(main, 100, 0);
 			}
 			
