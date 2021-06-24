@@ -27,9 +27,11 @@
 			function inputLogic(){
 				if(doodle.left && !doodle.right){
 					doodle.xVel = -5;
+					doodle.image = doodle.leftFace;
 				}
 				else if(!doodle.left && doodle.right){
 					doodle.xVel = 5;
+					doodle.image = doodle.rightFace;
 				}
 				else if(doodle.left == doodle.right){
 					doodle.xVel = 0;
