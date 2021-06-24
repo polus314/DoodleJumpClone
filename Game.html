@@ -8,10 +8,19 @@
 			
 			function keydownHandler(event) {
 				if(event.keyCode == 37) {
-					doodle.x -= 5;
+					doodle.xVel = -5;
 				}
 				else if(event.keyCode == 39) {
-					doodle.x += 5;
+					doodle.xVel = 5;
+				}
+			}
+			
+			function keyupHandler(event) {
+				if(event.keyCode == 37) {
+					doodle.xVel = 0;
+				}
+				else if(event.keyCode == 39) {
+					doodle.xVel = 0;
 				}
 			}
 			
@@ -27,6 +36,9 @@
 						doodle.yVel = -20;
 					}
 				}
+				
+				doodle.x += doodle.xVel;
+				//doodle.xVel = 0;
 			
 				doodle.y += doodle.yVel;
 				if (doodle.yVel < MAX_Y_VEL) {
@@ -78,6 +90,7 @@
 				doodle.width = 64;
 				doodle.height = 64;
 				doodle.yVel = 0;
+				doodle.xVel = 0;
 			
 				setTimeout(main, 100, 0);
 			}
@@ -107,12 +120,13 @@
             }
 			
 			document.addEventListener('keydown', keydownHandler);
+			document.addEventListener('keyup', keyupHandler);
 			window.onload = setupGame;
       </script>       
    </head>  
      
   <body>
-    <canvas id="myCanvas" width="400" height="800"></canvas>
+    <canvas id="myCanvas" width="400" height="720"></canvas>
   </body>
 </html>
 
