@@ -1,7 +1,7 @@
 var frames = 0;
 var doodle = {};
 var platform = {};
-
+var background = {};
 
 function keydownHandler(event) {
 	if(event.keyCode == 37) {
@@ -50,7 +50,12 @@ const MAX_X_VEL = 8;
 const SCREEN_WIDTH = 400;
 const NOSE_WIDTH = 14;
 
-function updateDoodle() {
+function updateDoodle(){
+	//horizontal movement of character
+	inputLogic();
+	doodle.x += doodle.xVel;
+	
+	//collision of platform:
 	if (platform.x - doodle.width < doodle.x - NOSE_WIDTH && doodle.x + NOSE_WIDTH < platform.x + platform.width)
 	{
 		if (doodle.y + doodle.height - MAX_Y_VEL - 1 < platform.y && platform.y < doodle.y + doodle.height)
@@ -58,14 +63,14 @@ function updateDoodle() {
 			doodle.yVel = -16;
 		}
 	}
-	inputLogic();
-	doodle.x += doodle.xVel;
-
+	
+	//acceleration due to gravity:
 	doodle.y += doodle.yVel;
 	if (doodle.yVel < MAX_Y_VEL) {
 		doodle.yVel += 0.5;
 	}
 	
+	//edge warp doodle each side
 	if (doodle.x < -doodle.width / 2) {
 		doodle.x = SCREEN_WIDTH - (doodle.width / 2) - 5;
 	}
@@ -73,15 +78,23 @@ function updateDoodle() {
 		doodle.x = (-doodle.width / 2) + 5;
 	}
 	
-	//DEBUG
+	//DEBUG (respawn)
 	if (doodle.y > 1000) {
 		doodle.y = 0;
 		doodle.x = 0;
 	}
 }
 
+function updateBackground(){
+	
+}
+
+function drawBackground(context){
+	context.drawImage(background.image, background.x, background.y);
+}
+
 function drawPlatform(context) {
-	context.drawImage(platformImg, platform.x, platform.y);
+	context.drawImage(platform.image, platform.x, platform.y);
 }
 
 function drawDoodle(context) {
@@ -93,12 +106,19 @@ function drawARectangle(context, xCoord, yCoord) {
 }
 
 function setupGame() {
+	//background
+	backgroundImg = new Image();
+	backgroundImg.src = "Background1.png";
+	background.image = backgroundImg;
+	background.x = 0;
+	background.y = 0;
+	//left doodle
 	doodleImgLeft = new Image();
 	doodleImgLeft.src = "jump_left_face.png";
+	//right doodle
 	doodleImgRight = new Image();
 	doodleImgRight.src = "jump_right_face.png";
-	
-	
+	//platform
 	platformImg = new Image();
 	platformImg.src = "Platform.png";
 	
@@ -125,10 +145,11 @@ function setupGame() {
 
 function update() {
 	updateDoodle();
-	
+	updateBackground();
 }
 
 function draw(context) {
+	drawBackground(context);
 	drawDoodle(context);
 	drawPlatform(context);
 }
