@@ -4,6 +4,15 @@ var doodle = {};
 var platform = {};
 var background = {};
 var platforms = [];
+var bump_scroll= 0;
+
+// Constants:
+const SCREEN_HEIGHT = 720;
+const SCREEN_WIDTH = 400;
+const MAX_Y_VEL = 20;
+const MAX_X_VEL = 8;
+const NOSE_WIDTH = 14;
+const HEAD_BUMP = 300;
 
 var chunk_library = {
 	1: "10 10 solid,20 20 solid,30 30 solid,40 40 solid,30 50 solid,20 60 solid,10 70 solid",
@@ -71,26 +80,36 @@ function inputLogic(){
 
 }
 
-const MAX_Y_VEL = 20;
-const MAX_X_VEL = 8;
-const SCREEN_WIDTH = 400;
-const NOSE_WIDTH = 14;
 
-function updateDoodle(){
-	//horizontal movement of character
-	inputLogic();
-	doodle.x += doodle.xVel;
-	
-	//collision of platform:
-	detectCollision(platform);
-	platforms.forEach(function(item) {detectCollision(item)});
-	
+function verticalLogic(){
 	//acceleration due to gravity:
 	doodle.y += doodle.yVel;
 	if (doodle.yVel < MAX_Y_VEL) {
 		doodle.yVel += 0.5;
 	}
+	if(doodle.y < HEAD_BUMP){//bumps head
+		bump_scroll = doodle.y - HEAD_BUMP;
+		doodle.y = HEAD_BUMP;
+		background.y -= bump_scroll / 2;//pan background
+		platform.y -= bump_scroll;
+	}
 	
+	
+}
+
+
+function updateDoodle(){
+	//horizontal movement of character:
+	inputLogic();
+	doodle.x += doodle.xVel;
+	
+	//vertical movement of character:
+	verticalLogic();
+	
+	//collision of platform:
+	detectCollision(platform);
+	platforms.forEach(function(item) {detectCollision(item)});
+		
 	//edge warp doodle each side
 	if (doodle.x < -doodle.width / 2) {
 		doodle.x = SCREEN_WIDTH - (doodle.width / 2) - 5;
@@ -98,13 +117,13 @@ function updateDoodle(){
 	else if (doodle.x > SCREEN_WIDTH - (doodle.width / 2)) {
 		doodle.x = (-doodle.width / 2) + 5;
 	}
-	
-	//DEBUG (respawn)
+		//DEBUG (respawn)
 	if (doodle.y > 1000) {
-		doodle.y = 0;
+		doodle.y = HEAD_BUMP;
 		doodle.x = 0;
 	}
 }
+
 
 function detectCollision(myPlatform) {
 	if (myPlatform.x - doodle.width < doodle.x - NOSE_WIDTH && doodle.x + NOSE_WIDTH < myPlatform.x + myPlatform.width)
@@ -120,14 +139,15 @@ function detectCollision(myPlatform) {
 }
 
 function updateBackground(){
-	
+	if(background.y > 1600){
+		background.y -= 1600;
+	}		
 }
 
 function drawBackground(context){
 	context.drawImage(background.image, background.x, background.y);
+	context.drawImage(background.image, background.x, background.y - 1600);
 }
-
-const SCREEN_HEIGHT = 720;
 
 function drawPlatform(context) {
 	context.drawImage(platform.image, platform.x, platform.y);
@@ -142,7 +162,7 @@ function drawDoodle(context) {
 	context.drawImage(doodle.image, doodle.x, doodle.y);
 }
 
-function drawARectangle(context, xCoord, yCoord) {
+function drawARectangle(context, xCoord, yCoord) {//debug square
 	context.fillRect(xCoord, yCoord, 100,100);
 }
 
@@ -165,7 +185,7 @@ function setupGame() {
 	
 	platform.image = platformImg;
 	platform.x = 0;
-	platform.y = 700;
+	platform.y = 600;
 	platform.width = 64;
 	platform.height = 32;
 	
@@ -176,7 +196,7 @@ function setupGame() {
 	doodle.left = false;
 	doodle.right = false;
 	doodle.xVel = 0;
-	doodle.y = 530;
+	doodle.y = HEAD_BUMP;
 	doodle.yVel = 0;
 	doodle.width = 64;
 	doodle.height = 64;
@@ -193,8 +213,9 @@ function update() {
 
 function draw(context) {
 	drawBackground(context);
-	drawDoodle(context);
 	drawPlatform(context);
+	drawDoodle(context);
+
 }
 
 function main(yCoord) {
@@ -203,7 +224,7 @@ function main(yCoord) {
 	
 	context.clearRect(0,0,1000,1000);
 	context.fillStyle = 'green';
-	drawARectangle(context, 350, yCoord);
+	//drawARectangle(context, 350, yCoord);
 	
 	update();
 	draw(context);
