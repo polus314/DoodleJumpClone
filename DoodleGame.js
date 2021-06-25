@@ -23,20 +23,30 @@ function keyupHandler(event) {
 
 function inputLogic(){
 	if(doodle.left && !doodle.right){
-		doodle.xVel = -5;
+		if(doodle.xVel > - MAX_X_VEL){
+			doodle.xVel += -1;
+		}
 		doodle.image = doodle.leftFace;
 	}
 	else if(!doodle.left && doodle.right){
-		doodle.xVel = 5;
+		if(doodle.xVel < MAX_X_VEL){
+			doodle.xVel += 1;
+		}
 		doodle.image = doodle.rightFace;
 	}
 	else if(doodle.left == doodle.right){
-		doodle.xVel = 0;
+		if(doodle.xVel > 0){
+			doodle.xVel -= 1;
+		}
+		else if(doodle.xVel < 0){
+			doodle.xVel += 1;
+		}
 	}
 
 }
 
 const MAX_Y_VEL = 20;
+const MAX_X_VEL = 8;
 const SCREEN_WIDTH = 400;
 const NOSE_WIDTH = 14;
 
@@ -45,7 +55,7 @@ function updateDoodle() {
 	{
 		if (doodle.y + doodle.height - MAX_Y_VEL - 1 < platform.y && platform.y < doodle.y + doodle.height)
 		{
-			doodle.yVel = -20;
+			doodle.yVel = -16;
 		}
 	}
 	inputLogic();
