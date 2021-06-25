@@ -1,7 +1,33 @@
+// Global variables
 var frames = 0;
 var doodle = {};
 var platform = {};
 var background = {};
+var platforms = [];
+
+var chunk_library = {
+	1: "10 10 solid,20 20 solid,30 30 solid,40 40 solid,30 50 solid,20 60 solid,10 70 solid",
+	2: "10 10 solid,30 30 solid,10 50 solid,30 70 solid,10 90 solid",
+	3: "10 10 solid,20 10 solid,30 30 solid,40 30 solid,10 50 solid,20 50 solid,30 70 solid, 40 70 solid",
+	4: "10 10 solid,10 40 solid,10 70 solid,10 100 solid",
+	5: "10 10 solid,20 20 solid,30 30 solid,40 40 solid,30 50 solid,20 60 solid,10 70 solid",
+}
+
+function createPlatformChunk() {
+	var platformChunk = chunk_library[4];
+	var platformInfo = platformChunk.split(",");
+	platformInfo.forEach( function (item, index, array) {
+		var arrInfo = item.split(" ");
+		var platform = {};
+		platform.x = arrInfo[0] * 7;
+		platform.y = SCREEN_HEIGHT - (arrInfo[1] * 7);
+		platform.type = arrInfo[2];
+		platform.width = 64;
+		platform.height = 32;
+		platforms.push(platform);
+	})
+	
+}
 
 function keydownHandler(event) {
 	if(event.keyCode == 37) {
@@ -56,13 +82,8 @@ function updateDoodle(){
 	doodle.x += doodle.xVel;
 	
 	//collision of platform:
-	if (platform.x - doodle.width < doodle.x - NOSE_WIDTH && doodle.x + NOSE_WIDTH < platform.x + platform.width)
-	{
-		if (doodle.y + doodle.height - MAX_Y_VEL - 1 < platform.y && platform.y < doodle.y + doodle.height)
-		{
-			doodle.yVel = -16;
-		}
-	}
+	detectCollision(platform);
+	platforms.forEach(function(item) {detectCollision(item)});
 	
 	//acceleration due to gravity:
 	doodle.y += doodle.yVel;
@@ -85,6 +106,19 @@ function updateDoodle(){
 	}
 }
 
+function detectCollision(myPlatform) {
+	if (myPlatform.x - doodle.width < doodle.x - NOSE_WIDTH && doodle.x + NOSE_WIDTH < myPlatform.x + myPlatform.width)
+	{
+		if (doodle.y + doodle.height - MAX_Y_VEL - 1 < myPlatform.y && myPlatform.y < doodle.y + doodle.height)
+		{
+			if (doodle.yVel > 0) 
+			{
+				doodle.yVel = -16;
+			}
+		}
+	}
+}
+
 function updateBackground(){
 	
 }
@@ -93,8 +127,15 @@ function drawBackground(context){
 	context.drawImage(background.image, background.x, background.y);
 }
 
+const SCREEN_HEIGHT = 720;
+
 function drawPlatform(context) {
 	context.drawImage(platform.image, platform.x, platform.y);
+	platforms.forEach(function(item, index, array) {
+		context.drawImage(platform.image, item.x, item.y);
+	})
+	
+	
 }
 
 function drawDoodle(context) {
@@ -139,6 +180,8 @@ function setupGame() {
 	doodle.yVel = 0;
 	doodle.width = 64;
 	doodle.height = 64;
+	
+	createPlatformChunk();
 	
 	setTimeout(main, 100, 0);
 }
