@@ -224,19 +224,19 @@ function drawARectangle(context, xCoord, yCoord) {//debug square
 function setupGame() {
 	//background
 	backgroundImg = new Image();
-	backgroundImg.src = "Background1.png";
+	backgroundImg.src = "Resources/Background1.png";
 	background.image = backgroundImg;
 	background.x = 0;
 	background.y = 0;
 	//left doodle
 	doodleImgLeft = new Image();
-	doodleImgLeft.src = "jump_left_face.png";
+	doodleImgLeft.src = "Resources/jump_left_face.png";
 	//right doodle
 	doodleImgRight = new Image();
-	doodleImgRight.src = "jump_right_face.png";
+	doodleImgRight.src = "Resources/jump_right_face.png";
 	//platform
 	platformImg = new Image();
-	platformImg.src = "Platform.png";
+	platformImg.src = "Resources/Platform.png";
 	
 	doodle.leftFace = doodleImgLeft;
 	doodle.rightFace = doodleImgRight;
