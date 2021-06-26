@@ -1,11 +1,13 @@
 // Global variables
-var frames = 0;
 var doodle = {};
+var platforms = [];
+var bullets = [];
+
 var background = {};
 var platformImg = {};
-var platforms = [];
 var bump_scroll= 0;
 var musicStarted = false;
+var gameInProgress = false;
 
 // Constants:
 const SCREEN_HEIGHT = 720;
@@ -14,18 +16,23 @@ const MAX_Y_VEL = 20;
 const MAX_X_VEL = 8;
 const NOSE_WIDTH = 14;
 const HEAD_BUMP = 200;
+const BULLET_VELOCITY = 20;
+const BULLET_RADIUS = 10;
+
+const KEY_LEFT = 37;
+const KEY_RIGHT = 39;
 
 // S is Solid
 // M is Moving
 // B is Breakable
 var chunk_library = new Array(
-	//'70 100 S,140 200 S,210 300 S,280 400 S,210 500 S,140 600 S,70 700 S',
-	//'70 100 S,210 300 S,70 500 S,210 700 S',
-	//'70 100 S,140 100 S,210 300 S,280 300 S,70 500 S,140 500 S,210 700 S,280 700 S',
-	//'70 100 S,70 300 S,70 500 S,70 700 S',
-	//'70 100 S,140 200 S,210 300 S,280 400 S,210 500 S,140 600 S,70 700 S',
-	//'70 100 M,140 200 M,210 300 M,280 400 M,210 500 M,140 600 M,70 700 M',
-	//'70 100 B,140 100 B,210 300 B,280 300 B,70 500 B,140 500 B,210 700 B,280 700 B',
+	'70 100 S,140 200 S,210 300 S,280 400 S,210 500 S,140 600 S,70 700 S',
+	'70 100 S,210 300 S,70 500 S,210 700 S',
+	'70 100 S,140 100 S,210 300 S,280 300 S,70 500 S,140 500 S,210 700 S,280 700 S',
+	'70 100 S,70 300 S,70 500 S,70 700 S',
+	'70 100 S,140 200 S,210 300 S,280 400 S,210 500 S,140 600 S,70 700 S',
+	'70 100 M,140 200 M,210 300 M,280 400 M,210 500 M,140 600 M,70 700 M',
+	'70 100 B,140 100 B,210 300 B,280 300 B,70 500 B,140 500 B,210 700 B,280 700 B',
 	'70 100 MB,140 200 MB,210 300 MB,280 400 MB,210 500 MB,140 600 MB,70 700 MB'
 );
 
@@ -48,10 +55,10 @@ function createPlatformChunk(platformChunk, offset) {
 }
 
 function keydownHandler(event) {
-	if(event.keyCode == 37) {
+	if(event.keyCode == KEY_LEFT) {
 		doodle.left = true;
 	}
-	else if(event.keyCode == 39) {
+	else if(event.keyCode == KEY_RIGHT) {
 		doodle.right = true;
 	}
 	
@@ -61,15 +68,34 @@ function keydownHandler(event) {
 		music.play();
 		musicStarted = true;
 	}
+	
+	gameInProgress = true;
 }
 
 function keyupHandler(event) {
-	if(event.keyCode == 37) {
+	if(event.keyCode == KEY_LEFT) {
 		doodle.left = false;
 	}
-	else if(event.keyCode == 39) {
+	else if(event.keyCode == KEY_RIGHT) {
 		doodle.right = false;
 	}
+}
+
+function clickHandler(event) {
+	var mouseX = event.pageX;
+	var mouseY = event.pageY;
+	
+	var xDiff = mouseX - doodle.x;
+	var yDiff = mouseY - doodle.y;
+	var totalDiff = Math.abs(xDiff) + Math.abs(yDiff);
+	
+	var bullet = {
+		x: doodle.x + (doodle.width / 2),
+		y: doodle.y,
+		xVel: (xDiff / totalDiff) * BULLET_VELOCITY,
+		yVel: (yDiff / totalDiff) * BULLET_VELOCITY
+	};
+	bullets.push(bullet);
 }
 
 function inputLogic(){
@@ -153,10 +179,12 @@ function updateDoodle(){
 	else if (doodle.x > SCREEN_WIDTH - (doodle.width / 2)) {
 		doodle.x = (-doodle.width / 2) + 5;
 	}
-		//DEBUG (respawn)
-	if (doodle.y > 720) {
-		doodle.y = HEAD_BUMP;
-		doodle.x = 0;
+	
+	// Game is over
+	if (doodle.y > SCREEN_HEIGHT) {
+		gameInProgress = false;
+		cleanupGameState();
+		showDeathScreen();
 	}
 }
 
@@ -200,6 +228,20 @@ function updatePlatforms() {
 	}
 }
 
+function updateBullets() {
+	var i = bullets.length;
+	while (i--) {
+		bullet = bullets[i];
+		bullet.x += bullet.xVel;
+		bullet.y += bullet.yVel;
+		
+		if (bullet.x < 0 || bullet.x > SCREEN_WIDTH ||
+		    bullet.y < 0 || bullet.y > SCREEN_HEIGHT) {
+			bullets.splice(i, 1);
+		}
+	}
+}
+
 function drawBackground(context){
 	context.drawImage(background.image, background.x, background.y);
 	context.drawImage(background.image, background.x, background.y - 1600);
@@ -217,11 +259,19 @@ function drawDoodle(context) {
 	context.drawImage(doodle.image, doodle.x, doodle.y);
 }
 
+function drawBullets(context) {
+	bullets.forEach(function(bullet, index) {
+		context.beginPath();
+		context.arc(bullet.x, bullet.y, BULLET_RADIUS, 0, 2 * Math.PI);
+		context.stroke();
+	});
+}
+
 function drawARectangle(context, xCoord, yCoord) {//debug square
 	context.fillRect(xCoord, yCoord, 100,100);
 }
 
-function setupGame() {
+function loadResources() {
 	//background
 	backgroundImg = new Image();
 	backgroundImg.src = "Resources/Background1.png";
@@ -238,17 +288,25 @@ function setupGame() {
 	platformImg = new Image();
 	platformImg.src = "Resources/Platform.png";
 	
+	setTimeout(showMainMenu, 50);
+}
+
+function initializeDoodle() {
 	doodle.leftFace = doodleImgLeft;
 	doodle.rightFace = doodleImgRight;
 	doodle.image = doodleImgLeft;
-	doodle.x = 0;
 	doodle.left = false;
 	doodle.right = false;
 	doodle.xVel = 0;
-	doodle.y = HEAD_BUMP;
 	doodle.yVel = 0;
 	doodle.width = 64;
 	doodle.height = 64;
+	doodle.x = (SCREEN_WIDTH / 2) - (doodle.width / 2);
+	doodle.y = HEAD_BUMP;
+}
+
+function setupGame() {
+	initializeDoodle();
 	
 	chunk_library.forEach( function (item, index, array) {
 		createPlatformChunk(item, -SCREEN_HEIGHT * index, index);
@@ -261,12 +319,64 @@ function update() {
 	updateDoodle();
 	updateBackground();
 	updatePlatforms();
+	updateBullets();
+}
+
+function cleanupGameState() {
+	initializeDoodle();
+	platforms = [];
+}
+
+function showDeathScreen() {
+	const canvas = document.querySelector("#myCanvas");
+	var context = canvas.getContext('2d');
+	
+	drawBackground(context);
+	drawDeathMessage(context);
+	
+	if (gameInProgress) {
+		setupGame();
+	} 
+	else {
+		setTimeout(showDeathScreen, 20)
+	}
+}
+
+function drawDeathMessage(context) {
+	var distanceTraveled = 100;
+	context.font = '30px serif';
+	context.fillText('You traveled ' + distanceTraveled + ' meters!', 50, 200);
+	context.fillText('Press any key to play again', 50, 400);
+}
+
+function showMainMenu() {
+	const canvas = document.querySelector("#myCanvas");
+	var context = canvas.getContext('2d');
+	
+	drawBackground(context);
+	drawTitle(context);
+	
+	if (gameInProgress) {
+		setupGame();
+	} 
+	else {
+		setTimeout(showMainMenu, 20)
+	}
+}
+
+function drawTitle(context) {
+	context.font = '50px serif';
+	context.fillText('Doodle Jump', 50, 200);
+	
+	context.font = '30px serif';
+	context.fillText('Press any key to start!', 50, 400);
 }
 
 function draw(context) {
 	drawBackground(context);
 	drawPlatforms(context);
 	drawDoodle(context);
+	drawBullets(context);
 }
 
 function main(yCoord) {
@@ -276,9 +386,12 @@ function main(yCoord) {
 	update();
 	draw(context);
 	
-	setTimeout(main, 20, yCoord + 5);
+	if (gameInProgress) {
+		setTimeout(main, 20, yCoord + 5);
+	}
 }
 
 document.addEventListener('keydown', keydownHandler);
 document.addEventListener('keyup', keyupHandler);
-window.onload = setupGame;
+document.addEventListener('click', clickHandler);
+window.onload = loadResources;
