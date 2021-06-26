@@ -136,6 +136,7 @@ function verticalLogic(){
 		platforms.forEach(function (item, index, array){
 			item.y -= bump_scroll;
 		})
+		height -= bump_scroll;//records how high you travel
 		
 		// Remove platforms that have scrolled off screen
 		var i = platforms.length;
@@ -160,6 +161,11 @@ function verticalLogic(){
 	
 }
 
+var height = 0;
+function score(context){
+	context.font = '20px calibri';
+	context.fillText(Math.round(height/10) + 'm', 16, 30, 100);
+}
 
 function updateDoodle(){
 	//horizontal movement of character:
@@ -307,7 +313,7 @@ function initializeDoodle() {
 
 function setupGame() {
 	initializeDoodle();
-	
+	height = 0;
 	chunk_library.forEach( function (item, index, array) {
 		createPlatformChunk(item, -SCREEN_HEIGHT * index, index);
 	})
@@ -343,9 +349,8 @@ function showDeathScreen() {
 }
 
 function drawDeathMessage(context) {
-	var distanceTraveled = 100;
 	context.font = '30px serif';
-	context.fillText('You traveled ' + distanceTraveled + ' meters!', 50, 200);
+	context.fillText('You traveled ' + Math.round(height)/10.0 + ' meters!', 50, 200);
 	context.fillText('Press any key to play again', 50, 400);
 }
 
@@ -377,6 +382,7 @@ function draw(context) {
 	drawPlatforms(context);
 	drawDoodle(context);
 	drawBullets(context);
+	score(context);
 }
 
 function main(yCoord) {
