@@ -15,12 +15,16 @@ const SCREEN_WIDTH = 400;
 const MAX_Y_VEL = 20;
 const MAX_X_VEL = 8;
 const NOSE_WIDTH = 14;
-const HEAD_BUMP = 200;
-const BULLET_VELOCITY = 20;
+const HEAD_BUMP = 100;
+const BULLET_VELOCITY = 10;
 const BULLET_RADIUS = 10;
+const ACC_GRAVITY = 0.5;
+const FRAME_RATE = 50;
 
 const KEY_LEFT = 37;
 const KEY_RIGHT = 39;
+
+var godMode = false;
 
 // S is Solid
 // M is Moving
@@ -45,7 +49,7 @@ function createPlatformChunk(platformChunk, offset) {
 		platform.y = Number(SCREEN_HEIGHT - (arrInfo[1]) + offset);
 		platform.type = arrInfo[2];
 		if (platform.type.includes("M")) {
-			platform.xVel = Math.random() * 3;
+			platform.xVel = (Math.random() - 0.5) * 6;
 		}
 		platform.width = 64;
 		platform.height = 32;
@@ -126,9 +130,15 @@ function inputLogic(){
 function verticalLogic(){
 	//acceleration due to gravity:
 	doodle.y += doodle.yVel;
-	if (doodle.yVel < MAX_Y_VEL) {
-		doodle.yVel += 0.5;
+	
+	doodle.yVel += doodle.yAcc;
+	if (doodle.yVel > MAX_Y_VEL) {
+		doodle.yVel = MAX_Y_VEL;
 	}
+	else if (doodle.yVel < -MAX_Y_VEL) {
+		doodle.yVel = -MAX_Y_VEL;
+	}
+	
 	if(doodle.y < HEAD_BUMP){//bumps head
 		bump_scroll = doodle.y - HEAD_BUMP;
 		doodle.y = HEAD_BUMP;
@@ -179,11 +189,11 @@ function updateDoodle(){
 	platforms.forEach(function(item) {detectCollision(item)});
 		
 	//edge warp doodle each side
-	if (doodle.x < -doodle.width / 2) {
-		doodle.x = SCREEN_WIDTH - (doodle.width / 2) - 5;
+	if (doodle.x < -doodle.width + NOSE_WIDTH) {
+		doodle.x = SCREEN_WIDTH - NOSE_WIDTH;
 	}
-	else if (doodle.x > SCREEN_WIDTH - (doodle.width / 2)) {
-		doodle.x = (-doodle.width / 2) + 5;
+	else if (doodle.x > SCREEN_WIDTH - NOSE_WIDTH) {
+		doodle.x = (-doodle.width + NOSE_WIDTH);
 	}
 	
 	// Game is over
@@ -192,8 +202,34 @@ function updateDoodle(){
 		cleanupGameState();
 		showDeathScreen();
 	}
+	
+	if (godMode) {
+		spawnBulletsAtAllAngles();
+	}
 }
 
+var startAngle = 0;
+
+function spawnBulletsAtAllAngles() {
+	var numSteps = 2;
+	var step = Math.PI * 2 / numSteps;
+	var angle = startAngle;
+	for (var i = 0; i < numSteps; i++) {
+		angle += step;
+		
+		var bullet = {
+			x: doodle.x + (doodle.width / 2),
+			y: doodle.y,
+			xVel: Math.sin(angle) * BULLET_VELOCITY,
+			yVel: Math.cos(angle) * BULLET_VELOCITY
+		};
+		bullets.push(bullet);
+	}
+	startAngle += (Math.PI * 2 / 20.0);
+	if (startAngle > Math.PI * 2) {
+		startAngle = 0;
+	}
+}
 
 function detectCollision(myPlatform) {
 	if ((myPlatform.x - doodle.width < doodle.x - NOSE_WIDTH) && (doodle.x + NOSE_WIDTH < myPlatform.x + myPlatform.width))
@@ -202,13 +238,25 @@ function detectCollision(myPlatform) {
 		{
 			if (doodle.yVel > 0) 
 			{
-				doodle.yVel = -16;
+				doodle.yVel = -doodle.jumpPower;
 				if (myPlatform.type.includes("B")) {
 					myPlatform.broken = true;
+				}
+				
+				if (godMode) {
+					if (Math.random() > 0.9) {
+						doodle.yAcc = -ACC_GRAVITY;
+						doodle.yVel = 0;
+						setTimeout(restoreGravity, 6000);
+					}
 				}
 			}
 		}
 	}
+}
+
+function restoreGravity() {
+	doodle.yAcc = ACC_GRAVITY;
 }
 
 function updateBackground(){
@@ -227,8 +275,11 @@ function updatePlatforms() {
 		}
 		else if (platform.type.includes("M")) {
 			platform.x += platform.xVel;
-			if ((platform.x + platform.width / 2) > SCREEN_WIDTH) {
-				platform.x -= (SCREEN_WIDTH);
+			if (platform.x > SCREEN_WIDTH) {
+				platform.x -= (SCREEN_WIDTH + platform.width);
+			}
+			else if (platform.x + platform.width < 0) {
+				platform.x += SCREEN_WIDTH + platform.width;
 			}
 		}
 	}
@@ -309,6 +360,11 @@ function initializeDoodle() {
 	doodle.height = 64;
 	doodle.x = (SCREEN_WIDTH / 2) - (doodle.width / 2);
 	doodle.y = HEAD_BUMP;
+	doodle.jumpPower = 16;
+	doodle.yAcc = ACC_GRAVITY;
+	if (godMode) {
+		doodle.jumpPower = 69;
+	}
 }
 
 function setupGame() {
@@ -331,6 +387,7 @@ function update() {
 function cleanupGameState() {
 	initializeDoodle();
 	platforms = [];
+	bullets = [];
 }
 
 function showDeathScreen() {
@@ -379,9 +436,10 @@ function drawTitle(context) {
 
 function draw(context) {
 	drawBackground(context);
+	drawBullets(context);
 	drawPlatforms(context);
 	drawDoodle(context);
-	drawBullets(context);
+	
 	score(context);
 }
 
@@ -393,7 +451,7 @@ function main(yCoord) {
 	draw(context);
 	
 	if (gameInProgress) {
-		setTimeout(main, 20, yCoord + 5);
+		setTimeout(main, 1000 / FRAME_RATE, yCoord + 5);
 	}
 }
 
