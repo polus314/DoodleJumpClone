@@ -12,7 +12,7 @@ const SCREEN_WIDTH = 400;
 const MAX_Y_VEL = 20;
 const MAX_X_VEL = 8;
 const NOSE_WIDTH = 14;
-const HEAD_BUMP = 300;
+const HEAD_BUMP = 200;
 
 var chunk_library = {
 	1: "10 10 solid,20 20 solid,30 30 solid,40 40 solid,30 50 solid,20 60 solid,10 70 solid",
@@ -23,7 +23,7 @@ var chunk_library = {
 }
 
 function createPlatformChunk() {
-	var platformChunk = chunk_library[4];
+	var platformChunk = chunk_library[5];
 	var platformInfo = platformChunk.split(",");
 	platformInfo.forEach( function (item, index, array) {
 		var arrInfo = item.split(" ");
@@ -92,6 +92,10 @@ function verticalLogic(){
 		doodle.y = HEAD_BUMP;
 		background.y -= bump_scroll / 2;//pan background
 		platform.y -= bump_scroll;
+		platforms.forEach(function (item, index, array){
+			item.y -= bump_scroll;
+		})
+		
 	}
 	
 	
