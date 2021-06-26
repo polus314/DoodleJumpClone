@@ -5,6 +5,7 @@ var background = {};
 var platformImg = {};
 var platforms = [];
 var bump_scroll= 0;
+var musicStarted = false;
 
 // Constants:
 const SCREEN_HEIGHT = 720;
@@ -14,17 +15,21 @@ const MAX_X_VEL = 8;
 const NOSE_WIDTH = 14;
 const HEAD_BUMP = 200;
 
+// S is Solid
+// M is Moving
+// B is Breakable
 var chunk_library = new Array(
-	//'70 100 solid,140 200 solid,210 300 solid,280 400 solid,210 500 solid,140 600 solid,70 700 solid',
-	//'70 100 solid,210 300 solid,70 500 solid,210 700 solid',
-	//'70 100 solid,140 100 solid,210 300 solid,280 300 solid,70 500 solid,140 500 solid,210 700 solid,280 700 solid',
-	//'70 100 solid,70 300 solid,70 500 solid,70 700 solid',
-	'70 100 solid,140 200 solid,210 300 solid,280 400 solid,210 500 solid,140 600 solid,70 700 solid',
-	'70 100 breakable,140 100 breakable,210 300 breakable,280 300 breakable,70 500 breakable,140 500 breakable,210 700 breakable,280 700 breakable',
+	//'70 100 S,140 200 S,210 300 S,280 400 S,210 500 S,140 600 S,70 700 S',
+	//'70 100 S,210 300 S,70 500 S,210 700 S',
+	//'70 100 S,140 100 S,210 300 S,280 300 S,70 500 S,140 500 S,210 700 S,280 700 S',
+	//'70 100 S,70 300 S,70 500 S,70 700 S',
+	//'70 100 S,140 200 S,210 300 S,280 400 S,210 500 S,140 600 S,70 700 S',
+	//'70 100 M,140 200 M,210 300 M,280 400 M,210 500 M,140 600 M,70 700 M',
+	//'70 100 B,140 100 B,210 300 B,280 300 B,70 500 B,140 500 B,210 700 B,280 700 B',
+	'70 100 MB,140 200 MB,210 300 MB,280 400 MB,210 500 MB,140 600 MB,70 700 MB'
 );
 
 function createPlatformChunk(platformChunk, offset) {
-	console.log(platformChunk);
 	var platformInfo = platformChunk.split(",");
 	platformInfo.forEach( function (item, index, array) {
 		var arrInfo = item.split(" ");
@@ -32,6 +37,9 @@ function createPlatformChunk(platformChunk, offset) {
 		platform.x = Number(arrInfo[0]);
 		platform.y = Number(SCREEN_HEIGHT - (arrInfo[1]) + offset);
 		platform.type = arrInfo[2];
+		if (platform.type.includes("M")) {
+			platform.xVel = Math.random() * 3;
+		}
 		platform.width = 64;
 		platform.height = 32;
 		platforms.push(platform);
@@ -45,6 +53,13 @@ function keydownHandler(event) {
 	}
 	else if(event.keyCode == 39) {
 		doodle.right = true;
+	}
+	
+	// User needs to interact with page before browser will let audio be played
+	if (!musicStarted) {
+		var music = document.getElementById("music");
+		music.play();
+		musicStarted = true;
 	}
 }
 
@@ -110,7 +125,6 @@ function verticalLogic(){
 		}
 		
 		if (yMinimum > -10) {
-			console.log(yMinimum);
 			var randomIndex = Math.floor(Math.random() * (chunk_library.length - 0.1));
 			var chunkInfo = chunk_library[randomIndex];
 			createPlatformChunk(chunkInfo, yMinimum-SCREEN_HEIGHT);
@@ -131,7 +145,6 @@ function updateDoodle(){
 	
 	//collision of platform:
 	platforms.forEach(function(item) {detectCollision(item)});
-	console.log(platforms.length);
 		
 	//edge warp doodle each side
 	if (doodle.x < -doodle.width / 2) {
@@ -156,7 +169,7 @@ function detectCollision(myPlatform) {
 			if (doodle.yVel > 0) 
 			{
 				doodle.yVel = -16;
-				if (myPlatform.type == "breakable") {
+				if (myPlatform.type.includes("B")) {
 					myPlatform.broken = true;
 				}
 			}
@@ -177,6 +190,12 @@ function updatePlatforms() {
 		var platform = platforms[i];
 		if (platform.broken) {
 			platforms.splice(i, 1);
+		}
+		else if (platform.type.includes("M")) {
+			platform.x += platform.xVel;
+			if ((platform.x + platform.width / 2) > SCREEN_WIDTH) {
+				platform.x -= (SCREEN_WIDTH);
+			}
 		}
 	}
 }
