@@ -5,6 +5,7 @@ var bullets = [];
 
 var background = {};
 var platformImg = {};
+var sounds = {};
 var bump_scroll= 0;
 var musicStarted = false;
 var gameInProgress = false;
@@ -21,8 +22,12 @@ const BULLET_RADIUS = 10;
 const ACC_GRAVITY = 0.5;
 const FRAME_RATE = 50;
 
-const KEY_LEFT = 37;
-const KEY_RIGHT = 39;
+const KEY_LEFT_ARROW = 37;
+const KEY_UP_ARROW = 38;
+const KEY_RIGHT_ARROW = 39;
+const KEY_DOWN_ARROW = 40;
+const KEY_ENTER = 13;
+
 
 var godMode = false;
 
@@ -59,28 +64,31 @@ function createPlatformChunk(platformChunk, offset) {
 }
 
 function keydownHandler(event) {
-	if(event.keyCode == KEY_LEFT) {
+	if(event.keyCode == KEY_LEFT_ARROW) {
 		doodle.left = true;
 	}
-	else if(event.keyCode == KEY_RIGHT) {
+	else if(event.keyCode == KEY_RIGHT_ARROW) {
 		doodle.right = true;
 	}
 	
-	// User needs to interact with page before browser will let audio be played
-	if (!musicStarted) {
-		var music = document.getElementById("music");
-		music.play();
-		musicStarted = true;
-	}
 	
-	gameInProgress = true;
+	
+	if (event.keyCode == KEY_ENTER) {
+		gameInProgress = true;
+		
+		// User needs to interact with page before browser will let audio be played
+		if (!musicStarted) {
+			playSound("music");
+			musicStarted = true;
+		}
+	}
 }
 
 function keyupHandler(event) {
-	if(event.keyCode == KEY_LEFT) {
+	if(event.keyCode == KEY_LEFT_ARROW) {
 		doodle.left = false;
 	}
-	else if(event.keyCode == KEY_RIGHT) {
+	else if(event.keyCode == KEY_RIGHT_ARROW) {
 		doodle.right = false;
 	}
 }
@@ -199,6 +207,7 @@ function updateDoodle(){
 	// Game is over
 	if (doodle.y > SCREEN_HEIGHT) {
 		gameInProgress = false;
+		playSound("death");
 		cleanupGameState();
 		showDeathScreen();
 	}
@@ -211,7 +220,7 @@ function updateDoodle(){
 var startAngle = 0;
 
 function spawnBulletsAtAllAngles() {
-	var numSteps = 2;
+	var numSteps = 10;
 	var step = Math.PI * 2 / numSteps;
 	var angle = startAngle;
 	for (var i = 0; i < numSteps; i++) {
@@ -239,6 +248,7 @@ function detectCollision(myPlatform) {
 			if (doodle.yVel > 0) 
 			{
 				doodle.yVel = -doodle.jumpPower;
+				playSound("jump");
 				if (myPlatform.type.includes("B")) {
 					myPlatform.broken = true;
 				}
@@ -337,13 +347,24 @@ function loadResources() {
 	background.y = 0;
 	//left doodle
 	doodleImgLeft = new Image();
-	doodleImgLeft.src = "Resources/jump_left_face.png";
+	doodleImgLeft.src = "Resources/rainbow_left.png";
 	//right doodle
 	doodleImgRight = new Image();
-	doodleImgRight.src = "Resources/jump_right_face.png";
+	doodleImgRight.src = "Resources/rainbow_right.png";
 	//platform
 	platformImg = new Image();
 	platformImg.src = "Resources/Platform.png";
+	
+	// Sounds
+	sounds["music"] = document.getElementById("music");
+	sounds["music"].loop = true;
+	sounds["music"].volume = 0.15;
+	
+	sounds["death"] = document.getElementById("death-sound");
+	sounds["death"].volume = 0.4;
+	
+	sounds["jump"] = document.getElementById("jump-sound");
+	
 	
 	setTimeout(showMainMenu, 50);
 }
@@ -405,10 +426,14 @@ function showDeathScreen() {
 	}
 }
 
+function playSound(soundName) {
+	sounds[soundName].play();
+}
+
 function drawDeathMessage(context) {
 	context.font = '30px serif';
 	context.fillText('You traveled ' + Math.round(height)/10.0 + ' meters!', 50, 200);
-	context.fillText('Press any key to play again', 50, 400);
+	context.fillText('Press Enter to play again', 50, 400);
 }
 
 function showMainMenu() {
@@ -431,7 +456,7 @@ function drawTitle(context) {
 	context.fillText('Doodle Jump', 50, 200);
 	
 	context.font = '30px serif';
-	context.fillText('Press any key to start!', 50, 400);
+	context.fillText('Press Enter to start!', 50, 400);
 }
 
 function draw(context) {
